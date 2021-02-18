@@ -111,5 +111,5 @@ Primary functionality
 
 # MAYBEDO:
 A list of expansion ideas an future functionality for Bx
-- [] Webpage support
-- [] OCR for images within PDFs
+- [ ] Webpage support
+- [ ] OCR for images within PDFs
