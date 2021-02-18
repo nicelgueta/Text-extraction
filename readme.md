@@ -103,8 +103,8 @@ Primary functionality
 
 - [x] First version of BxPath
 - [x] Add pdf2htmlEX backend
-- [] Add Ms Word backend
-- [] Tagging UI
+- [ ] Add Ms Word backend
+- [ ] Tagging UI
 
 &nbsp;
 &nbsp;
