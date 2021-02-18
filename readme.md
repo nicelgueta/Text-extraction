@@ -99,9 +99,17 @@ Bx also includes a python interface to Microsoft Word (which as it happens has a
 
 
 # TODO:
+Primary functionality
+
+- [x] First version of BxPath
+- [x] Add pdf2htmlEX backend
+- [] Add Ms Word backend
+- [] Tagging UI
+
+&nbsp;
+&nbsp;
+
+# MAYBEDO:
 A list of expansion ideas an future functionality for Bx
-
-- [x] Add Ms Word backend
-
-
-
+- [] Webpage support
+- [] OCR for images within PDFs
