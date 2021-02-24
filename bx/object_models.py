@@ -10,6 +10,7 @@ class BxInstruction(BaseModel):
     tagName: str
     index: Optional[int]
     attrs: Optional[dict]
+    useName: Optional[bool]
 
 class BxPath(BaseModel):
     instructions: List[BxInstruction]

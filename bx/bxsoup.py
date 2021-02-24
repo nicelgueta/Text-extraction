@@ -12,7 +12,8 @@ from typing import (
     List,
     Union,
     Iterable,
-    Generator
+    Generator,
+    Any
 )
 import warnings
 
@@ -30,8 +31,7 @@ HTML_FILE_ENCODING = 'latin-1' # often the cleanest for PDF HTMLs
 DEFAULT_BS4_PARSER = 'html.parser'
 
 DEFAULT_REGEX = {
-    #TODO: change this regex as it's shit
-    'float':r'(?<!\S)(?=.)(0|([1-9](\d*|\d{0,2}(,\d{3})*)))?(\.\d*[1-9])?(?!\S)', #supports str with commas also
+    'float':r'(?<!\S)(\$?\d*\.?\d+|\d{1,3}(,\d{3})*(\.\d+)?)(?!\S)', #supports str with commas also
 }
 
 ###
@@ -99,7 +99,7 @@ class BxSoup(BeautifulSoup):
             'class':'extraction-tag',
             'field-name':field_name
         })
-
+        detected_data_type = tags[0]['data-type']
 
         for tag in tags:
             path = []
@@ -122,10 +122,10 @@ class BxSoup(BeautifulSoup):
             # until there is no more parent tag (reaching the top of the soup)
             while tag.parent:
                 path_item = {'tagName':tag.name, 'attrs':tag.attrs}
-                same_name_attr_siblings = [tag.parent.find_all(tag.name,path_item['attrs'])]
+                same_name_attr_siblings = tag.parent.find_all(tag.name)
 
                 if len(same_name_attr_siblings)==1:
-                    path_item['useIndex'],path_item['useAttrs']=False,True
+                    path_item['useIndex'],path_item['useName']=False,True
                 else:
                     sibling_index=0
                     for sibling in same_name_attr_siblings:
@@ -134,14 +134,14 @@ class BxSoup(BeautifulSoup):
                             break
                         sibling_index+=1
                     path_item['index']=sibling_index
-                    path_item['useIndex'],path_item['useAttrs']=True,False
+                    path_item['useIndex']=True
                 path.append(BxInstruction(**path_item))
                 
                 #move up
                 tag = tag.parent
 
             # reverse order to present in order they should be executed, not how they were created
-            yield BxPath(instructions=path[::-1],regex=result_regex, dataType=tags[0]['data-type'])
+            yield BxPath(instructions=path[::-1],regex=result_regex, dataType=detected_data_type)
 
     def compile_bxpath(
             self,
@@ -172,10 +172,12 @@ class BxSoup(BeautifulSoup):
         tag = self
         for bxins in bxpath.instructions:
 
-            same_name_siblings = tag.find_all(bxins.tagName)
+            if bxins.useName:
+                tag = getattr(tag,bxins.tagName)
 
-            if bxins.useIndex:
+            elif bxins.useIndex:
                 try:
+                    same_name_siblings = tag.find_all(bxins.tagName)
                     tag = same_name_siblings[bxins.index]
                 except IndexError as e:
                     raise exceptions.BxCompilationError(
@@ -184,34 +186,39 @@ class BxSoup(BeautifulSoup):
                     f'{len(same_name_siblings)} out of a set of {set([t.name for t in tag.find_all()])}'
                 )
 
-            elif bxins.useAttrs:
-                try:
-                    tag = [t for t in same_name_siblings if t.attrs==bxins.attrs][0]
-                except IndexError as e:
-                    raise exceptions.BxCompilationError(
-                    f'IndexError: {e}. Could not find tag "{bxins.tagName}" matching attrs {bxins.attrs}'
-                    f' within parent tag "{tag.name}". Number of "{bxins.tagName}"  tags found: '
-                    f'{len(same_name_siblings)} out of a set of {set([t.name for t in tag.find_all()])}'
-                )
+            # TODO: NOT YET IMPLEMETED _ more work needed on attrs analysis
+            # elif bxins.useAttrs:
+            #     try:
+            #         tag = [t for t in tag.find_all(bxins.tagName,bxins.attrs)][0]
+            #     except IndexError as e:
+            #         raise exceptions.BxCompilationError(
+            #         f'IndexError: {e}. Could not find tag "{bxins.tagName}" matching attrs {bxins.attrs}'
+            #         f' within parent tag "{tag.name}". Number of "{bxins.tagName}"  tags found: '
+            #         f'{len(same_name_siblings)} out of a set of {set([t.name for t in tag.find_all()])}'
+            #     )
 
             else:
                 raise exceptions.BxCompilationError(
-                    'Invalid BxInstruction object provided. Not instructed to use either tag index or attrs.'
+                    'Invalid BxInstruction object provided. Not instructed to use either tag index or other mechanism.'
                     f' Instruction provided: {bxins.dict()}'
                 )
     
         if as_text:
-            #remove dodgy encoding errors in string - using ONLY ascii
-            t_text = ''.join([i if ord(i) < 128 else '' for i in tag.text.strip()])
+            extracted_text = self.clean_text(tag.text)
 
-            reg_to_use = DEFAULT_REGEX[bxpath.dataType] if bxpath.dataType in DEFAULT_REGEX.keys() else bxpath.regex
+            if bxpath.regex:
+                reg_to_use = bxpath.regex
+            elif bxpath.dataType in DEFAULT_REGEX.keys():
+                reg_to_use = DEFAULT_REGEX[bxpath.dataType]
+            else:
+                reg_to_use = None
+
             if reg_to_use:
                 reg = re.compile(reg_to_use)
-                extracted_text = reg.search(t_text)
+                extracted_text = reg.search(extracted_text)
                 if extracted_text:
                     #reg pulled a value
                     extracted_text = extracted_text.group()
-                    return extracted_text
                 else:
                     warnings.warn((
                         f'WARNING: regex value: {bxpath.regex} failed to detect an extractable value. '
@@ -221,8 +228,8 @@ class BxSoup(BeautifulSoup):
                     ),exceptions.BxExtractionWarning
                 )
 
-            return tag.text.strip()
-        if result_attrs:
+            return self.make_dtype(extracted_text,bxpath.dataType)
+        elif result_attrs:
             try:
                 return {attr:getattr(tag,attr) for attr in result_attrs}
             except TypeError as e:
@@ -325,6 +332,22 @@ class BxSoup(BeautifulSoup):
             raise exceptions.BxCompilationError(f'PDF conversion engine {engine} not supported')
 
         return cls(src=html_file)
+
+    def clean_text(self,text: str) -> str:
+        ''' 
+        clean text before returning
+        '''
+        text = text.strip()
+        # remove dodgy encoding errors in string with spaces- using ONLY ascii
+        text = ''.join([i if ord(i) < 128 else ' ' for i in text])
+        return text
+    
+    def make_dtype(self,text:str,data_type:str) -> Any:
+        if data_type=='float':
+            return float(''.join([t for t in text if t.isnumeric() or t=='.']))
+        else:
+            return text
+
 
 
 
