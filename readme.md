@@ -1,7 +1,26 @@
 # Bx
 
+ 
+### How often have you needed to turn these pdfs:
+![image](ex1.png)
+![image](ex2.png)
+
+
+### Into this ?
+|    | valueDate         |   investmentTaxCredits |   total | companyName                |   cashAssets |   accountsReceivable |
+|---:|:------------------|-----------------------:|--------:|:---------------------------|-------------:|---------------------:|
+|  0 | JULY   31,   2013 |                  89939 |  649439 | FANCY TECHNOLOGIES LIMITED |       225000 |               280000 |
+
+___________
+&nbsp;
+&nbsp;
+
+
 ### Add-on to the great BeautifulSoup library for rules-generation and compilation for the purpose of automated rules-based information extraction from HTML-converted documents.
 
+&nbsp;
+&nbsp;
+&nbsp;
 &nbsp;
 
 # Background

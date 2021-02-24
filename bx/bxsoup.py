@@ -315,7 +315,7 @@ class BxSoup(BeautifulSoup):
 
         :rtype: BxCollection
         """
-        field_names = set([tag.name for tag in self.find_all('bx_extraction_tag')])
+        field_names = set(tag['field-name'] for tag in self.find_all('bx_extraction_tag'))
 
         res = {}
         for field in field_names:
