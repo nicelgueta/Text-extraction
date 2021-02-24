@@ -2,10 +2,8 @@
 
  
 ### How often have you needed to turn these pdfs:
-<p align="center">
-  <img src="ex1.png">
-  <img src="ex2.png">
-</p>
+![image](ex1.png?raw=true)
+![image](ex2.png?raw=true)
 
 
 ### Into this ?
