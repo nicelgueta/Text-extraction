@@ -2,8 +2,8 @@
 
  
 ### How often have you needed to turn these pdfs:
-![image](ex1.png)
-![image](ex2.png)
+![image](./ex1.png)
+![image](./ex2.png)
 
 
 ### Into this ?
