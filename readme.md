@@ -2,8 +2,10 @@
 
  
 ### How often have you needed to turn these pdfs:
-![image](./ex1.png)
-![image](./ex2.png)
+<p align="center">
+  <img src="ex1.png">
+  <img src="ex2.png">
+</p>
 
 
 ### Into this ?
