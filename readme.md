@@ -2,8 +2,8 @@
 
  
 ### How often have you needed to turn these pdfs:
-![image](ex1.png?raw=true)
-![image](ex2.png?raw=true)
+![image](https://github.com/nicelgueta/Bx/blob/master/ex1.PNG?raw=true)
+![image](https://github.com/nicelgueta/Bx/blob/master/ex2.PNG?raw=true)
 
 
 ### Into this ?
